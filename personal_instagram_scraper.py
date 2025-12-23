@@ -1,7 +1,7 @@
 """
 # ============================================
 
-# Instagram Scraper
+# Personal Instagram Scraper
 # Author: Lily Gates
 # Created: 12/22/2025
 # Last Updated 12/22/2025
@@ -12,6 +12,10 @@
 # Features:
 # - Works for both Mac and Windows OS
 
+# Requirements
+# pip install selenium webdriver-manager pandas requests
+
+
 # Notes:
 Selenium can only see private accounts if:
 - You are logged in to Instagram
@@ -21,49 +25,56 @@ If any of those are false, Instagram will still hide the content.
 
 # ============================================
 """
-import platform
-import time
-import random
-import pandas as pd
-import requests
-import os
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
 
+import os
+import time
+import platform
+import requests
+import pandas as pd
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 # ------------------------------
 # 1. SETUP CHROME + SELENIUM
 # ------------------------------
+# Get the OS username dynamically
+os_username = os.getlogin()
 
-# Your OS username
-os_username = "lilyxgates"
-
+# Initialize Chrome options
 chrome_options = Options()
 
-# Detect OS
-current_os = platform.system()  # 'Darwin' for macOS, 'Windows' for Windows
+# Use your real Chrome profile
+system_os = platform.system()
 
-if current_os == "Darwin":  # macOS
-    chrome_profile_path = f"/Users/{os_username}/Library/Application Support/Google/Chrome"
-    chromedriver_path = "/path/to/chromedriver_mac"  # replace with your Mac chromedriver path
-elif current_os == "Windows":  # Windows
-    chrome_profile_path = rf"C:\Users\{os_username}\AppData\Local\Google\Chrome\User Data"
-    chromedriver_path = r"C:\path\to\chromedriver.exe"  # replace with your Windows chromedriver path
+if system_os == "Darwin":  # macOS
+    chrome_options.add_argument(
+        f"--user-data-dir=/Users/{os_username}/Library/Application Support/Google/Chrome"
+    )
+    chrome_options.add_argument("--profile-directory=Default")
+elif system_os == "Windows":
+    chrome_options.add_argument(
+        fr"--user-data-dir=C:\Users\{os_username}\AppData\Local\Google\Chrome\User Data"
+    )
+    chrome_options.add_argument("--profile-directory=Default")
 else:
-    raise Exception(f"Unsupported OS: {current_os}")
+    raise Exception(f"Unsupported OS: {system_os}")
 
-# Use Chrome profile
-chrome_options.add_argument(f"--user-data-dir={chrome_profile_path}")
-chrome_options.add_argument("--profile-directory=Default")
-# chrome_options.add_argument("--headless=new")  # optional
+# Optional: headless mode
+# chrome_options.add_argument("--headless=new")
 
-# Start driver
-service = Service(chromedriver_path)
-driver = webdriver.Chrome(service=service, options=chrome_options)
+# Create the driver using webdriver_manager
+driver = webdriver.Chrome(
+    service=Service(ChromeDriverManager().install()),
+    options=chrome_options
+)
 
+# Test: open Instagram
 driver.get("https://www.instagram.com/")
+print(driver.title)
 
 # ------------------------------
 # 2. OPEN INSTAGRAM PROFILE
