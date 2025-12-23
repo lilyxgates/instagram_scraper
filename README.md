@@ -4,6 +4,14 @@
 ## Description
 This Python project uses the **Instagram Basic Display API** to download  your personal Instagram posts (images, videos, and carousels) and save metadata in a CSV file. Each media file is saved with a timestamped filename, and carousel posts are enumerated for easy reference.  
 
+## Organization of Github
+```
+personal_instagram_scraper/
+│
+├─ media/             # downloaded images/videos
+├─ instagram_archive/ # metadata CSV
+└─ config.yaml        # username and access token
+```
 
 ## Features
 - Download **images, videos, and carousel posts**.

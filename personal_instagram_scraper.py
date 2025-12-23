@@ -62,3 +62,55 @@ while url:
     url = data.get("paging", {}).get("next")  # handle pagination
 
 print(f"Found {len(media_list)} posts.")
+
+# -----------------------------
+# DOWNLOAD MEDIA & BUILD METADATA
+# -----------------------------
+metadata = []
+
+for post in media_list:
+    post_dt = datetime.fromisoformat(post["timestamp"].replace("Z", "+00:00"))
+    caption = post.get("caption", "")
+
+    # Handle carousel
+    if post["media_type"] == "CAROUSEL_ALBUM":
+        children = post.get("children", {}).get("data", [])
+        for idx, child in enumerate(children, start=1):
+            media_url = child["media_url"]
+            ext = media_url.split("?")[0].split(".")[-1]
+            filename = f"{post_dt.strftime('%Y-%m-%d_%H-%M-%S')}_{idx:02d}.{ext}"
+            path = os.path.join(MEDIA_DIR, filename)
+            with open(path, "wb") as f:
+                f.write(requests.get(media_url).content)
+            metadata.append({
+                "username": USERNAME,
+                "datetime": post_dt,
+                "caption": caption,
+                "media_type": child["media_type"],
+                "filename": filename,
+                "url": media_url
+            })
+    else:  # single image/video
+        media_url = post["media_url"]
+        ext = media_url.split("?")[0].split(".")[-1]
+        filename = f"{post_dt.strftime('%Y-%m-%d_%H-%M-%S')}.{'jpg' if post['media_type']=='IMAGE' else 'mp4'}"
+        path = os.path.join(MEDIA_DIR, filename)
+        with open(path, "wb") as f:
+            f.write(requests.get(media_url).content)
+        metadata.append({
+            "username": USERNAME,
+            "datetime": post_dt,
+            "caption": caption,
+            "media_type": post["media_type"],
+            "filename": filename,
+            "url": media_url
+        })
+    print(f"Saved post {post_dt} with {len(post.get('children', {}).get('data', [])) or 1} media files.")
+
+# -----------------------------
+# SAVE METADATA CSV
+# -----------------------------
+df = pd.DataFrame(metadata)
+csv_path = os.path.join(ARCHIVE_DIR, f"{USERNAME}_posts_metadata.csv")
+df.to_csv(csv_path, index=False)
+print(f"Metadata saved to {csv_path}")
