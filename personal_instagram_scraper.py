@@ -1,23 +1,9 @@
-"""
 # ============================================
-
 # Personal Instagram Scraper
 # Author: Lily Gates
 # Created: 12/22/2025
 # Last Updated 12/22/2025
-
-1. Set up Instagram Basic Display API
-    1a. Go to Facebook for Developers -> Create an app -> choose Consumer.
-    1b. Add Instagram Basic Display product.
-    1c. Generate an Access Token (long-lived if possible).
-    1d. Make sure the token has permission to read your own media (user_media).
-
-2. Install dependencies
-pip install requests pandas
-
-
 # ============================================
-"""
 
 import os
 import requests
@@ -45,9 +31,21 @@ USERNAME = config["username"]
 ACCESS_TOKEN = config["access_token"]
 
 # -----------------------------
+# GET USER ID
+# -----------------------------
+me_url = f"https://graph.instagram.com/me?fields=id,username&access_token={ACCESS_TOKEN}"
+resp = requests.get(me_url)
+if resp.status_code != 200:
+    raise Exception(f"Failed to fetch user info: {resp.status_code} {resp.text}")
+
+user_data = resp.json()
+USER_ID = user_data["id"]
+print(f"Found user: {user_data['username']} (ID: {USER_ID})")
+
+# -----------------------------
 # GET USER MEDIA
 # -----------------------------
-BASE_URL = "https://graph.instagram.com/me/media"
+BASE_URL = f"https://graph.instagram.com/{USER_ID}/media"
 FIELDS = "id,caption,media_type,media_url,timestamp,children{media_type,media_url}"
 
 media_list = []
@@ -105,6 +103,7 @@ for post in media_list:
             "filename": filename,
             "url": media_url
         })
+
     print(f"Saved post {post_dt} with {len(post.get('children', {}).get('data', [])) or 1} media files.")
 
 # -----------------------------
